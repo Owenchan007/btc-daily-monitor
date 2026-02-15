@@ -20,7 +20,6 @@ def get_price_history(days):
     if "prices" not in data:
         raise ValueError(f"API没有返回价格数据，返回内容：{data}")
 
-    # 直接使用每天收盘价
     prices_daily = [p[1] for p in data["prices"]]
     return prices_daily
 
@@ -49,15 +48,15 @@ def score(ahr):
 
 def stars(s):
     if s == 5:
-        return "⭐⭐⭐⭐⭐ 强烈低估"
+        return "⭐⭐⭐⭐⭐"
     elif s == 4:
-        return "⭐⭐⭐⭐ 偏低估"
+        return "⭐⭐⭐⭐"
     elif s == 3:
-        return "⭐⭐⭐ 正常区间"
+        return "⭐⭐⭐"
     elif s == 2:
-        return "⭐⭐ 偏高"
+        return "⭐⭐"
     else:
-        return "⭐ 高风险区"
+        return "⭐"
 
 def suggestion(s):
     if s >= 4:
@@ -81,37 +80,23 @@ def send_wechat(message):
 # 主函数
 def main():
     try:
-        # 获取历史价格
         prices_200 = get_price_history(200)
-        prices_365 = get_price_history(365)
-
         current_price = prices_200[-1]
         ma200 = statistics.mean(prices_200)
-        ma1y = statistics.mean(prices_365)
 
         coin_age_days = get_coin_age_days()
         exp_value = get_exponential_value(coin_age_days)
 
-        # 正确AHR999公式
         ahr999 = (current_price / ma200) * (current_price / exp_value)
-
         total_score = score(ahr999)
 
         message = f"""
-📊 BTC每日估值报告
+📊 BTC每日估值报告（21:00推送）
 
 当前价格：${round(current_price,2)}
-
 200日均值：${round(ma200,2)}
-1年均值：${round(ma1y,2)}
-
-币龄：{coin_age_days} 天
-指数增长估值：${round(exp_value,2)}
-
 AHR999：{round(ahr999,3)}
-综合评分：{total_score}
 评级：{stars(total_score)}
-
 {suggestion(total_score)}
 """
         send_wechat(message)
