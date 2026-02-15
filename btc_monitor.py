@@ -4,11 +4,10 @@ import statistics
 # 填入你的 Server酱 SendKey
 SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
 
-# 获取比特币历史价格，days 最大支持365
-# 返回每天收盘价列表
+# 获取比特币历史价格，返回每天收盘价列表
 def get_price_history(days):
     if days > 365:
-        days = 365
+        days = 365  # 最大365天
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}"
     try:
         r = requests.get(url, timeout=10)
