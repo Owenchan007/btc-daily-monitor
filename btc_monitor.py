@@ -8,7 +8,7 @@ SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
 def get_price_history(days):
     if days > 365:
         days = 365  # 最大365天
-    url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}"
+    url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}&interval=daily"
     try:
         r = requests.get(url, timeout=10)
         data = r.json()
@@ -18,10 +18,8 @@ def get_price_history(days):
     if "prices" not in data:
         raise ValueError(f"API没有返回价格数据，返回内容：{data}")
 
-    prices_hourly = [p[1] for p in data["prices"]]
-
-    # 取每天收盘价（每24小时取最后一个）
-    prices_daily = [prices_hourly[i] for i in range(23, len(prices_hourly), 24)]
+    # 每天收盘价列表
+    prices_daily = [p[1] for p in data["prices"]]
     return prices_daily
 
 # 评分函数
@@ -85,7 +83,7 @@ def send_wechat(message):
 # 主函数
 def main():
     try:
-        # 获取200日和365日每日收盘价
+        # 获取每日收盘价
         prices_200 = get_price_history(200)
         prices_365 = get_price_history(365)
 
