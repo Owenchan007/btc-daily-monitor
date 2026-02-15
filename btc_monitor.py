@@ -1,13 +1,17 @@
 import requests
 import statistics
+import json
 
+# -------------------------------
 # 填入你的 Server酱 SendKey
 SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
+# -------------------------------
 
 # 获取比特币历史价格，返回每天收盘价列表
 def get_price_history(days):
+    # CoinGecko API最多返回365天
     if days > 365:
-        days = 365  # 最大365天
+        days = 365
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}&interval=daily"
     try:
         r = requests.get(url, timeout=10)
@@ -18,7 +22,7 @@ def get_price_history(days):
     if "prices" not in data:
         raise ValueError(f"API没有返回价格数据，返回内容：{data}")
 
-    # 每天收盘价列表
+    # 直接使用每天收盘价，不再切片
     prices_daily = [p[1] for p in data["prices"]]
     return prices_daily
 
@@ -109,7 +113,6 @@ AHR趋势值：{round(ahr,3)}
 
 {suggestion(total)}
 """
-
         send_wechat(message)
         print("推送成功")
     except Exception as e:
