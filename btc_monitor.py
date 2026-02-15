@@ -5,9 +5,10 @@ import statistics
 SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
 
 # 获取比特币历史价格，days 最大支持365
+# 返回每天收盘价列表
 def get_price_history(days):
     if days > 365:
-        days = 365  # 最大365天
+        days = 365
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}"
     try:
         r = requests.get(url, timeout=10)
@@ -18,8 +19,11 @@ def get_price_history(days):
     if "prices" not in data:
         raise ValueError(f"API没有返回价格数据，返回内容：{data}")
 
-    prices = [p[1] for p in data["prices"]]
-    return prices
+    prices_hourly = [p[1] for p in data["prices"]]
+
+    # 取每天收盘价（每24小时取最后一个）
+    prices_daily = [prices_hourly[i] for i in range(23, len(prices_hourly), 24)]
+    return prices_daily
 
 # 评分函数
 def score(ahr, long_ratio):
@@ -82,6 +86,7 @@ def send_wechat(message):
 # 主函数
 def main():
     try:
+        # 获取200日和365日每日收盘价
         prices_200 = get_price_history(200)
         prices_365 = get_price_history(365)
 
@@ -99,8 +104,8 @@ def main():
 
 当前价格：${round(current_price,2)}
 
-AHR趋势值：{round(ahr,2)}
-长期估值比：{round(long_ratio,2)}
+AHR趋势值：{round(ahr,3)}
+长期估值比：{round(long_ratio,3)}
 
 综合评分：{total}
 评级：{stars(total)}
