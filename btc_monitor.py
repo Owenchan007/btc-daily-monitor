@@ -2,12 +2,15 @@ import requests
 import statistics
 import math
 from datetime import datetime
+import os
 
 # -------------------------------
-# 填入你的 Server酱 SendKey
-SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
-# -------------------------------
+# 从环境变量读取 Server酱 Key
+SERVER_CHAN_KEY = os.environ.get("SERVER_CHAN_KEY")
+if not SERVER_CHAN_KEY:
+    raise ValueError("SERVER_CHAN_KEY 未设置，请在 GitHub Secret 中添加")
 
+# -------------------------------
 # 获取比特币历史价格，返回每天收盘价列表
 def get_price_history(days):
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}&interval=daily"
