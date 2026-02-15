@@ -1,18 +1,30 @@
 import requests
 import statistics
 
-SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
+# 填入你的 Server酱 SendKey
+SERVER_CHAN_KEY = "在这里填入你的SendKey"
 
+# 获取比特币历史价格，days 最大支持365
 def get_price_history(days):
+    if days > 365:
+        days = 365  # 最大365天
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}"
-    r = requests.get(url)
-    data = r.json()
+    try:
+        r = requests.get(url, timeout=10)
+        data = r.json()
+    except Exception as e:
+        raise ValueError(f"请求CoinGecko失败: {e}")
+
+    if "prices" not in data:
+        raise ValueError(f"API没有返回价格数据，返回内容：{data}")
+
     prices = [p[1] for p in data["prices"]]
     return prices
 
+# 评分函数
 def score(ahr, long_ratio):
     s = 0
-
+    # AHR评分
     if ahr < 0.5:
         s += 3
     elif ahr < 1.0:
@@ -22,6 +34,7 @@ def score(ahr, long_ratio):
     else:
         s -= 2
 
+    # 长期估值评分
     if long_ratio < 0.6:
         s += 3
     elif long_ratio < 1.0:
@@ -33,6 +46,7 @@ def score(ahr, long_ratio):
 
     return s
 
+# 星级评价
 def stars(s):
     if s >= 5:
         return "⭐⭐⭐⭐⭐ 强烈低估"
@@ -45,6 +59,7 @@ def stars(s):
     else:
         return "⭐ 高风险区"
 
+# 投资建议
 def suggestion(s):
     if s >= 5:
         return "建议：可加大定投比例"
@@ -55,28 +70,31 @@ def suggestion(s):
     else:
         return "建议：暂停加仓"
 
+# 微信推送
 def send_wechat(message):
     url = f"https://sctapi.ftqq.com/{SERVER_CHAN_KEY}.send"
-    data = {
-        "title": "BTC每日估值报告",
-        "desp": message
-    }
-    requests.post(url, data=data)
+    data = {"title": "BTC每日估值报告", "desp": message}
+    try:
+        requests.post(url, data=data, timeout=10)
+    except Exception as e:
+        print(f"发送微信失败: {e}")
 
+# 主函数
 def main():
-    prices_200 = get_price_history(200)
-    prices_730 = get_price_history(730)
+    try:
+        prices_200 = get_price_history(200)
+        prices_365 = get_price_history(365)
 
-    current_price = prices_200[-1]
-    ma200 = statistics.mean(prices_200)
-    ma2y = statistics.mean(prices_730)
+        current_price = prices_200[-1]
+        ma200 = statistics.mean(prices_200)
+        ma1y = statistics.mean(prices_365)
 
-    ahr = current_price / ma200
-    long_ratio = current_price / ma2y
+        ahr = current_price / ma200
+        long_ratio = current_price / ma1y
 
-    total = score(ahr, long_ratio)
+        total = score(ahr, long_ratio)
 
-    message = f"""
+        message = f"""
 📊 BTC每日估值报告
 
 当前价格：${round(current_price,2)}
@@ -90,7 +108,10 @@ AHR趋势值：{round(ahr,2)}
 {suggestion(total)}
 """
 
-    send_wechat(message)
+        send_wechat(message)
+        print("推送成功")
+    except Exception as e:
+        print(f"脚本运行出错: {e}")
 
 if __name__ == "__main__":
     main()
