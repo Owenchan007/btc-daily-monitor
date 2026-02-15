@@ -26,6 +26,7 @@ def get_price_history(days):
     prices_daily = [p[1] for p in data["prices"]]
     return prices_daily
 
+# -------------------------------
 # 计算币龄（天）
 def get_coin_age_days():
     btc_birth = datetime(2009, 1, 3)
@@ -38,7 +39,7 @@ def get_exponential_value(coin_age_days):
 
 # AHR999评分函数
 def score(ahr):
-    if ahr < 0.5:
+    if ahr < 0.45:
         return 5
     elif ahr < 0.7:
         return 4
@@ -62,7 +63,9 @@ def stars(s):
         return "⭐"
 
 def suggestion(s):
-    if s >= 4:
+    if s == 5:
+        return "建议：无脑抄底"
+    elif s == 4:
         return "建议：可加大定投比例"
     elif s == 3:
         return "建议：正常定投"
@@ -80,6 +83,7 @@ def send_wechat(message):
     except Exception as e:
         print(f"发送微信失败: {e}")
 
+# -------------------------------
 # 主函数
 def main():
     try:
@@ -93,15 +97,16 @@ def main():
         ahr999 = (current_price / ma200) * (current_price / exp_value)
         total_score = score(ahr999)
 
-        message = f"""
-📊 BTC每日估值报告（21:00推送）
+        # 微信推送内容，每行换行显示
+        message = (
+            f"📊 BTC每日估值报告（21:00推送）\n\n"
+            f"当前价格：${round(current_price,2)}\n"
+            f"200日均值：${round(ma200,2)}\n"
+            f"AHR999：{round(ahr999,3)}\n"
+            f"评级：{stars(total_score)}\n"
+            f"{suggestion(total_score)}"
+        )
 
-当前价格：${round(current_price,2)}
-200日均值：${round(ma200,2)}
-AHR999：{round(ahr999,3)}
-评级：{stars(total_score)}
-{suggestion(total_score)}
-"""
         send_wechat(message)
         print("推送成功")
     except Exception as e:
