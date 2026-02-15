@@ -1,6 +1,7 @@
 import requests
 import statistics
-import json
+import math
+from datetime import datetime
 
 # -------------------------------
 # 填入你的 Server酱 SendKey
@@ -9,9 +10,6 @@ SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
 
 # 获取比特币历史价格，返回每天收盘价列表
 def get_price_history(days):
-    # CoinGecko API最多返回365天
-    if days > 365:
-        days = 365
     url = f"https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days={days}&interval=daily"
     try:
         r = requests.get(url, timeout=10)
@@ -22,55 +20,51 @@ def get_price_history(days):
     if "prices" not in data:
         raise ValueError(f"API没有返回价格数据，返回内容：{data}")
 
-    # 直接使用每天收盘价，不再切片
+    # 直接使用每天收盘价
     prices_daily = [p[1] for p in data["prices"]]
     return prices_daily
 
-# 评分函数
-def score(ahr, long_ratio):
-    s = 0
-    # AHR评分
+# 计算币龄（天）
+def get_coin_age_days():
+    btc_birth = datetime(2009, 1, 3)
+    today = datetime.now()
+    return (today - btc_birth).days
+
+# 指数增长估值
+def get_exponential_value(coin_age_days):
+    return 10 ** (5.84 * math.log10(coin_age_days) - 17.01)
+
+# AHR999评分函数
+def score(ahr):
     if ahr < 0.5:
-        s += 3
+        return 5
+    elif ahr < 0.7:
+        return 4
     elif ahr < 1.0:
-        s += 2
+        return 3
     elif ahr < 1.3:
-        s += 1
+        return 2
     else:
-        s -= 2
+        return 1
 
-    # 长期估值评分
-    if long_ratio < 0.6:
-        s += 3
-    elif long_ratio < 1.0:
-        s += 2
-    elif long_ratio < 1.5:
-        s += 1
-    else:
-        s -= 2
-
-    return s
-
-# 星级评价
 def stars(s):
-    if s >= 5:
+    if s == 5:
         return "⭐⭐⭐⭐⭐ 强烈低估"
-    elif s >= 3:
+    elif s == 4:
         return "⭐⭐⭐⭐ 偏低估"
-    elif s >= 1:
+    elif s == 3:
         return "⭐⭐⭐ 正常区间"
-    elif s == 0:
+    elif s == 2:
         return "⭐⭐ 偏高"
     else:
         return "⭐ 高风险区"
 
-# 投资建议
 def suggestion(s):
-    if s >= 5:
+    if s >= 4:
         return "建议：可加大定投比例"
-    elif s >= 3:
+    elif s == 3:
         return "建议：正常定投"
-    elif s >= 1:
+    elif s == 2:
         return "建议：小额定投"
     else:
         return "建议：暂停加仓"
@@ -87,7 +81,7 @@ def send_wechat(message):
 # 主函数
 def main():
     try:
-        # 获取每日收盘价
+        # 获取历史价格
         prices_200 = get_price_history(200)
         prices_365 = get_price_history(365)
 
@@ -95,23 +89,30 @@ def main():
         ma200 = statistics.mean(prices_200)
         ma1y = statistics.mean(prices_365)
 
-        ahr = current_price / ma200
-        long_ratio = current_price / ma1y
+        coin_age_days = get_coin_age_days()
+        exp_value = get_exponential_value(coin_age_days)
 
-        total = score(ahr, long_ratio)
+        # 正确AHR999公式
+        ahr999 = (current_price / ma200) * (current_price / exp_value)
+
+        total_score = score(ahr999)
 
         message = f"""
 📊 BTC每日估值报告
 
 当前价格：${round(current_price,2)}
 
-AHR趋势值：{round(ahr,3)}
-长期估值比：{round(long_ratio,3)}
+200日均值：${round(ma200,2)}
+1年均值：${round(ma1y,2)}
 
-综合评分：{total}
-评级：{stars(total)}
+币龄：{coin_age_days} 天
+指数增长估值：${round(exp_value,2)}
 
-{suggestion(total)}
+AHR999：{round(ahr999,3)}
+综合评分：{total_score}
+评级：{stars(total_score)}
+
+{suggestion(total_score)}
 """
         send_wechat(message)
         print("推送成功")
