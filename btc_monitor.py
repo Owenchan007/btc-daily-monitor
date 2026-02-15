@@ -97,13 +97,13 @@ def main():
         ahr999 = (current_price / ma200) * (current_price / exp_value)
         total_score = score(ahr999)
 
-        # 微信推送内容，每行换行显示
+        # 微信推送内容，每行用 <br> 换行
         message = (
-            f"📊 BTC每日估值报告（21:00推送）\n\n"
-            f"当前价格：${round(current_price,2)}\n"
-            f"200日均值：${round(ma200,2)}\n"
-            f"AHR999：{round(ahr999,3)}\n"
-            f"评级：{stars(total_score)}\n"
+            f"📊 BTC每日估值报告（21:00推送）<br>"
+            f"当前价格：${round(current_price,2)}<br>"
+            f"200日均值：${round(ma200,2)}<br>"
+            f"AHR999：{round(ahr999,3)}<br>"
+            f"评级：{stars(total_score)}<br>"
             f"{suggestion(total_score)}"
         )
 
