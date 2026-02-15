@@ -2,7 +2,7 @@ import requests
 import statistics
 
 # 填入你的 Server酱 SendKey
-SERVER_CHAN_KEY = "在这里填入你的SendKey"
+SERVER_CHAN_KEY = "SCT314813TceWtnRBKA30YQs6XaQi9PAwh"
 
 # 获取比特币历史价格，days 最大支持365
 def get_price_history(days):
