@@ -2,8 +2,8 @@ name: BTC每日估值推送
 
 on:
   schedule:
-    # 每天北京时间 21:00 自动推送 → UTC 时间 13:00
-    - cron: "0 13 * * *"
+    # 每天北京时间 21:08 自动推送 → UTC 时间 13:08
+    - cron: "8 13 * * *"
   workflow_dispatch:  # 支持手动触发
 
 jobs:
